@@ -192,15 +192,9 @@ def visualize_model(model, iters=1, index=0):
     images, labels = images.to(device), images.to(device)
 
     outputs = model(images)
-    results = outputs.data[index].tolist()
-    minR = min(results)
-    maxR = max(results)
-    diff = maxR-minR
-    poResults = [ (i-minR)/diff for i in results]
-    sumR = sum(poResults)
-    denormResults = [i/sumR for i in poResults]
-
-    _, preds = torch.max(outputs.data, 1)
+    results = outputs.data[index]
+    sm = torch.nn.Softmax()
+    denormResults = sm(results).tolist()
 
     plt.subplot(121)
     img = images.cpu().data[index]
