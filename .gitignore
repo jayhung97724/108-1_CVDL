@@ -1,2 +1,4 @@
 .vscode
-Homework1/Q5/data
+Homework1/Q5/data/
+*.pyc
+**/__pycache__/
