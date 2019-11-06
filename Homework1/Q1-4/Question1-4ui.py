@@ -141,6 +141,84 @@ def Q2():
 
     cv2.destroyAllWindows()
 
+def Q4():
+    print('Q4 ...')
+    img = cv2.imread('../images/Contour.png')
+    imgray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    ret,thresh = cv2.threshold(imgray,127,255,0)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    cv2.drawContours(img, contours, -1, (0,0,255), 2)
+    showImageOSize(img)
+    cv2.destroyAllWindows()
+
+def showImageOSize(img):
+    cv2.namedWindow("Show Image")
+    cv2.imshow("Show Image",img)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+
+def Q3_1(angle=45, scale=0.8, Tx=150, Ty=50):   
+    print('Q3.1 ...')
+    img = cv2.imread('../images/OriginalTransform.png')
+    print('Showing Original image\nPress any key to continue ...')
+    showImageOSize(img)
+    rows,cols = img.shape[:2]
+    center = (125+Tx, 130+Ty)
+    
+    print(center)
+    TM = np.float32([[1,0,Tx],[0,1,Ty]])
+    RM = cv2.getRotationMatrix2D(center,angle,1)
+
+    img = cv2.warpAffine(img,TM,(cols,rows))
+    img = cv2.warpAffine(img,RM,(cols,rows))
+    img = cv2.resize(img,None,fx=scale, fy=scale, interpolation = cv2.INTER_AREA)
+    print('Showing transformed image ...')
+    showImageOSize(img)
+
+def click_event(event, x, y, flags, param):
+    global pointCount, cornerInputs, img3_2
+    if event == cv2.EVENT_LBUTTONDOWN:
+        pointCount = pointCount + 1
+        point = [x, y]
+        cornerInputs.append([x, y])
+        cv2.circle(img3_2, tuple(point), 4, (0, 0, 255), 4)
+        cv2.imshow('Original Perspective', img3_2)
+        
+        print(cornerInputs)
+        if pointCount == 4:
+            showNewPerspective(cornerInputs, img3_2)
+
+def showNewPerspective(cornerInputs, img):
+    # print(cornerInputs)
+    w = 1600
+    h = 1200
+    newVtx = [[0,0],[0,w],[h,w],[h,0]]
+    
+    M = cv2.getPerspectiveTransform(np.float32(cornerInputs),np.float32(newVtx))
+    dst = cv2.warpPerspective(img,M,(img.shape[0], img.shape[1]))
+    dst = cv2.flip(dst,0)
+    cv2.namedWindow('Perspective Result', cv2.WINDOW_NORMAL)
+    cv2.imshow('Perspective Result', dst)
+    cv2.waitKey(0)
+
+img3_2 = []
+pointCount = 0
+cornerInputs = []
+
+def Q3_2():
+    global pointCount, cornerInputs, img3_2
+    img3_2 = cv2.imread('../images/OriginalPerspective.png')
+    print('Q3_2 ...')
+    cv2.namedWindow('Original Perspective', cv2.WINDOW_NORMAL)
+    cv2.imshow('Original Perspective', img3_2)
+    
+    pointCount = 0
+    cornerInputs = []
+    cv2.setMouseCallback('Original Perspective', click_event)
+    
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     w = loadUi('Q1_4.ui')
@@ -149,6 +227,12 @@ if __name__ == "__main__":
     w.button1_3.clicked.connect(lambda: Q1_3(int(w.comboBox.currentText())))
     w.button1_4.clicked.connect(Q1_4)
     w.button2.clicked.connect(Q2)
+    w.button3_1.clicked.connect(lambda: Q3_1(int(w.lineEdit_angle.text()),
+                                            float(w.lineEdit_scale.text()),
+                                            int(w.lineEdit_tx.text()),
+                                            int(w.lineEdit_ty.text())))
+    w.button3_2.clicked.connect(Q3_2)
+    w.button4.clicked.connect(Q4)
     w.show()
     sys.exit(app.exec_())
 
