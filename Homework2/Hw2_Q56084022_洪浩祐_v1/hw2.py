@@ -21,6 +21,7 @@ def Q2():
     template = cv2.imread('ncc_template.jpg',0)
     w, h = template.shape[::-1]
     res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
+    res_COR = cv2.matchTemplate(img_gray, template, cv2.TM_CCORR_NORMED)
     threshold = 0.95
     loc = np.where( res >= threshold)
     for pt in zip(*loc[::-1]):
@@ -29,6 +30,9 @@ def Q2():
     cv2.imshow('CCOEFF_NORMED', res)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+    # cv2.imshow('CCORR_NORMED', res_COR)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
     cv2.imshow('res.png', img_rgb)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
@@ -80,7 +84,7 @@ def Q3_2():
 
 
     # cv2.drawMatchesKnn expects list of lists as matches.
-    img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,sorted_good[7:14],None,flags=2)
+    img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,sorted_good[41:47],None,flags=2)
 
     plt.imshow(img3),plt.show()
 
