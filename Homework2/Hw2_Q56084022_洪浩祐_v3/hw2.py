@@ -22,12 +22,13 @@ def Q2():
     w, h = template.shape[::-1]
     res = cv2.matchTemplate(img_gray, template, cv2.TM_CCOEFF_NORMED)
     res_COR = cv2.matchTemplate(img_gray, template, cv2.TM_CCORR_NORMED)
+    result = cv2.normalize(res_COR, None, alpha=0, beta=1, norm_type=cv2.NORM_MINMAX, dtype=cv2.CV_32F)
     threshold = 0.95
     loc = np.where( res >= threshold)
     for pt in zip(*loc[::-1]):
         cv2.rectangle(img_rgb, pt, (pt[0] + w, pt[1] + h), (0,0,255), 2)
     cv2.imwrite('res.png', img_rgb)
-    cv2.imshow('CCOEFF_NORMED', res)
+    cv2.imshow('CCORR_NORMED', result)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
     # cv2.imshow('CCORR_NORMED', res_COR)
@@ -41,18 +42,21 @@ def Q3_1():
     img2 = cv2.imread('Aerial2.jpg',0) # trainImage
 
     # Initiate SIFT detector
-    sift = cv2.xfeatures2d.SIFT_create(6)
+    sift = cv2.xfeatures2d.SIFT_create()
 
     # find the keypoints and descriptors with SIFT
     kp1, des1 = sift.detectAndCompute(img1,None)
     kp2, des2 = sift.detectAndCompute(img2,None)
 
-    img1 = cv2.drawKeypoints(img1, kp1, img1, flags= cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
+    sorted_kp1 = sorted(kp1, key = lambda x:x.size, reverse=True)
+    sorted_kp2 = sorted(kp2, key = lambda x:x.size, reverse=True)
+
+    img1 = cv2.drawKeypoints(img1, sorted_kp1[:7], img1, flags= cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
     cv2.imwrite('FeatureAerial1.jpg', img1)
     cv2.imshow('FeatureAerial1.jpg', img1)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-    img2 = cv2.drawKeypoints(img2, kp2, img2, flags= cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
+    img2 = cv2.drawKeypoints(img2, sorted_kp2[:7], img2, flags= cv2.DRAW_MATCHES_FLAGS_NOT_DRAW_SINGLE_POINTS)
     cv2.imwrite('FeatureAerial2.jpg', img2)
     cv2.imshow('FeatureAerial2.jpg', img2)
     cv2.waitKey(0)
@@ -68,24 +72,26 @@ def Q3_2():
     # find the keypoints and descriptors with SIFT
     kp1, des1 = sift.detectAndCompute(img1,None)
     kp2, des2 = sift.detectAndCompute(img2,None)
+    sorted_kp1 = sorted(kp1, key = lambda x:x.size, reverse=True)
+    sorted_kp2 = sorted(kp2, key = lambda x:x.size, reverse=True)
+
+    index1 = []
+    index2 = []
+
+    for i in range(7):
+        index1.append(kp1.index(sorted_kp1[i]))
+        index2.append(kp2.index(sorted_kp2[i]))
 
     # BFMatcher with default params
     bf = cv2.BFMatcher()
-    matches = bf.knnMatch(des1,des2, k=2)
+    matches = bf.knnMatch(des1[index1], des2[index2], k=2)
 
-    # # Apply ratio test
+    # Apply ratio test
     good = []
     for m,n in matches:
         if m.distance < 0.75*n.distance:
             good.append([m])
-
-    # Sort them in the order of their distance.
-    sorted_good = sorted(good, key = lambda x:x[0].distance)
-
-
-    # cv2.drawMatchesKnn expects list of lists as matches.
-    img3 = cv2.drawMatchesKnn(img1,kp1,img2,kp2,sorted_good[41:47],None,flags=2)
-
+    img3 = cv2.drawMatchesKnn(img1,sorted_kp1[:7],img2,sorted_kp2[:7],good,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
     plt.imshow(img3),plt.show()
 
 if __name__ == "__main__":
